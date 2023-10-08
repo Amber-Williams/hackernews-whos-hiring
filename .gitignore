@@ -160,5 +160,8 @@ cython_debug/
 #.idea/
 
 
+# macbook
+.DS_Store
+
 # output files
 output/

@@ -7,12 +7,12 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.13"
 beautifulsoup4 = "^4.12.2"
 pandas = "^2.0.3"
 openai = "^0.28.1"
 lxml = "^4.9.3"
-
+numpy = "^1.26.0"
 
 [build-system]
 requires = ["poetry-core"]
