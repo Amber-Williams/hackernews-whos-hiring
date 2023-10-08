@@ -1,129 +1,23 @@
-import urllib
-from bs4 import BeautifulSoup
-import requests
-import time
+import os
 
 import pandas as pd
 import numpy as np
 
-from chat_extractor import ChatExtractor
-from csv_to_markdown import Csv2Markdown
+import utils
 
 
-MONTH = "september"
-YEAR = "2023"
+MONTH = os.environ['MONTH']
+YEAR = os.environ['YEAR']
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/117.0'
-}
+print("yay")
 
+utils.create_hn_hiring_csv(MONTH, YEAR)
 
-chatextractor = ChatExtractor()
+hiring_text_df = pd.read_csv(f"output/hn-hiring-{MONTH}-{YEAR}.csv")
+test_hiring_text_df = np.array_split(hiring_text_df, 100)  # chunk parse data
 
+utils.parse_hiring_comment(MONTH, YEAR, test_hiring_text_df[0], 0)
 
-def get_hn_next_page(soup, dict):
-    if soup.find(class_='morelink'):
-        next_url = soup.find(class_='morelink')
-        next_url = next_url['href']
-        response = requests.get("https://news.ycombinator.com/"+ next_url, headers=headers)
-        soup = BeautifulSoup(response.text, 'lxml')
-        comments = soup.find_all(class_="commtext")
-        for comment in comments:
-            if "|" in comment.text:
-                dict["text"] += [comment.text]
-        return get_hn_next_page(soup, dict)
-    else:
-        return dict
-
-
-def create_hn_hiring_csv(month, year):
-    # Get the first link from Google search results
-    text = f":news.ycombinator.com who's hiring {month} {year}"
-    text = urllib.parse.quote_plus(text)
-    url = 'https://google.com/search?q=' + text
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, 'lxml')
-
-    # Scrape the HN thread - page 1
-    url = soup.find_all(class_='g')[0]
-    url = url.find('a')
-    url = url['href']
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, 'lxml')
-    hn_dict = {'text': []}
-    comments = soup.find_all(class_="commtext")
-    for comment in comments:
-        if "|" in comment.text:
-            hn_dict["text"] += [comment.text]
-
-    # Continue to scrape the HN thread - pages
-    get_hn_next_page(soup, hn_dict)
-
-    # Save to CSV
-    df = pd.DataFrame(hn_dict)
-    df.to_csv(f"output/hn-hiring-{month}-{year}.csv")
-
-
-def parse_hiring_comment(month, year, df, batch):
-    # Use LLM to organize comment data into a dataframe
-    comment_summaries = []
-    for index, row in df.iterrows():
-        print('Processing row...', index)
-        time.sleep(5)
-        try:
-            _row = chatextractor.extract(row['text'])
-            if _row is None:
-                continue
-            if isinstance(_row, list):
-                for _r in _row:
-                    _r["content"] = row['text']
-                    comment_summaries.append(_r)
-            else:
-                _row["content"] = row['text']
-                comment_summaries.append(_row)
-        except Exception as err:
-            print(f"Unable to parse batch: {i} row: {index}, {err=}")
-        continue
-
-    # Save to CSV
-    comment_summaries_df = pd.DataFrame.from_dict(comment_summaries)
-    comment_summaries_df.to_csv(f"output/hn-hiring-{month}-{year}-summary-{batch}.csv")
-
-def join_batch_csvs(month, year):
-    # Join batch CSVs into one CSV
-    batch_csvs = []
-    for i in range(5):
-        batch_csvs.append(pd.read_csv(f"output/hn-hiring-{month}-{year}-summary-{i}.csv", index_col=0))
-    df = pd.concat(batch_csvs)
-    df.reset_index(drop=True).to_csv(f"output/hn-hiring-{month}-{year}-summary.csv")
-
-# 1
-# create_hn_hiring_csv(MONTH, YEAR)
-
-# 2
-# hiring_text_df = pd.read_csv(f"output/hn-hiring-{MONTH}-{YEAR}.csv")
-# test_hiring_text_df = np.array_split(hiring_text_df, 5)  # chunk parse data
-# for i, df in enumerate(test_hiring_text_df):
-#     parse_hiring_comment(MONTH, YEAR, df, i)
-
-# 3
-# join_batch_csvs(MONTH, YEAR)
-
-# 4
-# def drop_time_wasters(month, year):
-#     df = pd.read_csv(f"output/hn-hiring-{month}-{year}-summary.csv")
-#     df = df[['salary', 'job title', 'company', 'company location', 'link to apply', 'remote']]
-#     df = df[df['salary'].notna()]
-#     df = df[df['salary'] != 'Not mentioned']
-#     df = df[df['remote'] == 'Yes'].drop(columns=['remote'])
-#     df.reset_index(drop=True).to_csv(f"output/hn-hiring-{month}-{year}-summary-filtered.csv")
-
-# drop_time_wasters(MONTH, YEAR)
-
-# 5
-def turn_into_markdown(month, year):
-    md = Csv2Markdown(f"output/hn-hiring-{month}-{year}-summary-filtered.csv")
-    md.save_table(f"output/hn-hiring-{month}-{year}.md")
-
-
-turn_into_markdown(MONTH, YEAR)
+utils.join_batch_csvs(MONTH, YEAR)
+utils.drop_time_wasters(MONTH, YEAR)
+utils.turn_into_markdown(MONTH, YEAR)

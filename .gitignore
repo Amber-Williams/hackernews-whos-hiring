@@ -164,4 +164,4 @@ cython_debug/
 .DS_Store
 
 # output files
-output/
+output/*.csv

@@ -1,8 +1,9 @@
 import json
+import os
 
 import openai
 
-openai.api_key = "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"
+openai.api_key = os.environ['OPENAI_API_KEY']
 
 
 class ChatExtractor:
