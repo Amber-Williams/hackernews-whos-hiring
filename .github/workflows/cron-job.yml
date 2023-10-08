@@ -1,0 +1,74 @@
+name: Create Hacker News hiring table
+on:
+  schedule:
+    - cron: "00 00 9 * *" # runs at on the 2nd of every month
+
+jobs:
+  createTableAndPullRequest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure date
+        run: |
+          YEAR=(date +%Y)
+          echo "YEAR=${YEAR}" >> $GITHUB_ENV
+          MONTH=(LC_ALL=C date +%B)
+          echo "MONTH=${MONTH}" >> $GITHUB_ENV
+
+      - name: Setup python
+        id: setup-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.6.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      - name: Run create table
+        env:
+          super_secret: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          source .venv/bin/activate
+          poetry run python main.py
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: Update report
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: ${{env.MONTH}}-${{env.YEAR}}-hiring-table
+          delete-branch: true
+          title: "${{env.YEAR}} Update report"
+          body: |
+            Create hackernews hiring table
+            - Updated ${{env.MONTH}}-${{env.YEAR}}-hiring-table.md
+          labels: |
+            automated pr
+          assignees: amber-williams
+          reviewers: amber-williams
+          milestone: 1
+          draft: false
