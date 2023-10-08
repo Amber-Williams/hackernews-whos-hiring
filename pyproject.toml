@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "hackernews-whos-hiring"
+version = "0.1.0"
+description = "Parses the hackernew's who's hiring thread into a quick filterable and sortable CSV"
+authors = ["amber williams <amberwilliamsdev@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+beautifulsoup4 = "^4.12.2"
+pandas = "^2.0.3"
+openai = "^0.28.1"
+lxml = "^4.9.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
