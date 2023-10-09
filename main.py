@@ -1,23 +1,27 @@
-import os
-
 import pandas as pd
 import numpy as np
 
 import utils
+from config import settings
+from chat_extractor import ChatExtractor
+
+BATCH_SIZE = 5
 
 
-MONTH = os.environ['MONTH']
-YEAR = os.environ['YEAR']
+utils.create_hn_hiring_csv(settings.MONTH, settings.YEAR)
 
-print("yay")
+hiring_text_df = pd.read_csv(f"output/hn-hiring-{settings.MONTH}-{settings.YEAR}.csv")
+test_hiring_text_df = np.array_split(hiring_text_df, BATCH_SIZE)
 
-utils.create_hn_hiring_csv(MONTH, YEAR)
+for index, df in enumerate(test_hiring_text_df):
+    utils.parse_hiring_comment(
+        chatextractor=ChatExtractor(model_key=settings.OPENAI_API_KEY),
+        month=settings.MONTH,
+        year=settings.YEAR,
+        df=df,
+        batch=index
+    )
 
-hiring_text_df = pd.read_csv(f"output/hn-hiring-{MONTH}-{YEAR}.csv")
-test_hiring_text_df = np.array_split(hiring_text_df, 100)  # chunk parse data
-
-utils.parse_hiring_comment(MONTH, YEAR, test_hiring_text_df[0], 0)
-
-utils.join_batch_csvs(MONTH, YEAR)
-utils.drop_time_wasters(MONTH, YEAR)
-utils.turn_into_markdown(MONTH, YEAR)
+utils.join_batch_csvs(settings.MONTH, settings.YEAR, len(test_hiring_text_df))
+utils.drop_time_wasters(settings.MONTH, settings.YEAR)
+utils.turn_into_markdown(settings.MONTH, settings.YEAR)

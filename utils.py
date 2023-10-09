@@ -1,20 +1,16 @@
 import urllib
 from bs4 import BeautifulSoup
 import requests
-import time
 
 import pandas as pd
 
-from chat_extractor import ChatExtractor
 from csv_to_markdown import Csv2Markdown
+from chat_extractor import ChatExtractor
 
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/117.0'
 }
-
-
-chatextractor = ChatExtractor()
 
 
 def get_hn_next_page(soup, dict):
@@ -60,12 +56,13 @@ def create_hn_hiring_csv(month, year):
     df.to_csv(f"output/hn-hiring-{month}-{year}.csv")
 
 
-def parse_hiring_comment(month, year, df, batch):
+def parse_hiring_comment(chatextractor: ChatExtractor, month, year, df, batch):
+    if len(df) > 500:
+        raise Exception(f"Unable to parse batch: {batch}, too large")
     # Use LLM to organize comment data into a dataframe
     comment_summaries = []
     for index, row in df.iterrows():
         print('Processing row...', index)
-        time.sleep(5)
         try:
             _row = chatextractor.extract(row['text'])
             if _row is None:
@@ -79,17 +76,17 @@ def parse_hiring_comment(month, year, df, batch):
                 comment_summaries.append(_row)
         except Exception as err:
             print(f"Unable to parse batch: {batch} row: {index}, {err=}")
-        continue
+            continue
 
     # Save to CSV
     comment_summaries_df = pd.DataFrame.from_dict(comment_summaries)
     comment_summaries_df.to_csv(f"output/hn-hiring-{month}-{year}-summary-{batch}.csv")
 
 
-def join_batch_csvs(month, year):
+def join_batch_csvs(month, year, batch_size: int):
     # Join batch CSVs into one CSV
     batch_csvs = []
-    for i in range(5):
+    for i in range(batch_size):
         batch_csvs.append(pd.read_csv(f"output/hn-hiring-{month}-{year}-summary-{i}.csv", index_col=0))
     df = pd.concat(batch_csvs)
     df.reset_index(drop=True).to_csv(f"output/hn-hiring-{month}-{year}-summary.csv")

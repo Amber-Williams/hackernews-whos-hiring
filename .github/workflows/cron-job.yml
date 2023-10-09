@@ -1,7 +1,7 @@
 name: Create Hacker News hiring table
 on:
   schedule:
-    - cron: "00 00 9 * *" # runs at on the 2nd of every month
+    - cron: "00 00 2 * *" # runs at on the 2nd of every month
 
 jobs:
   createTableAndPullRequest:
@@ -62,7 +62,7 @@ jobs:
           signoff: false
           branch: ${{env.MONTH}}-${{env.YEAR}}-hiring-table
           delete-branch: true
-          title: "${{env.YEAR}} Update report"
+          title: "${{env.MONTH}} ${{env.YEAR}} report"
           body: |
             Create hackernews hiring table
             - Updated ${{env.MONTH}}-${{env.YEAR}}-hiring-table.md

@@ -1,13 +1,13 @@
 import json
-import os
 
 import openai
 
-openai.api_key = os.environ['OPENAI_API_KEY']
-
-
 class ChatExtractor:
-    def __init__(self, model="gpt-3.5-turbo"):
+    def __init__(self, model_key=None, model="gpt-3.5-turbo"):
+        if model_key:
+            self.model_key = model_key
+        else:
+            raise ValueError("No OpenAI API key provided")
         self.model = model
         self.system_role = """You are an assistant that extracts the key points of a job posting
       
@@ -71,6 +71,7 @@ class ChatExtractor:
         self.example_entities_3 = ""
 
     def extract(self, content):
+        openai.api_key = self.model_key
         response = openai.ChatCompletion.create(
             model=self.model,
             messages=[

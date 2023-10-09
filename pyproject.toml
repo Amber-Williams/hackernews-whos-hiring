@@ -13,6 +13,8 @@ pandas = "^2.0.3"
 openai = "^0.28.1"
 lxml = "^4.9.3"
 numpy = "^1.26.0"
+pydantic = "^2.4.2"
+pydantic-settings = "^2.0.3"
 
 [build-system]
 requires = ["poetry-core"]
