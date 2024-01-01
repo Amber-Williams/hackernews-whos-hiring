@@ -25,19 +25,9 @@ jobs:
           touch test.txt
           echo "Running create table" >> test.txt
 
-      - name: Commit files
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add -A
-          git commit -m "Add or update documents"
-          # Replace 'your-branch-name' with the name of the branch you want to create
-          git push origin HEAD:your-branch-name
-
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Update documents"
           title: "Update Documents"
           body: "This is an auto-generated PR with document updates"
