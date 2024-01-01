@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = os.getenv('OPENAI_API_KEY')
     OPENAI_MODEL: str = os.getenv('OPENAI_MODEL') or "gpt-3.5-turbo-1106"
     MONTH: str = os.getenv('MONTH') or datetime.now().strftime('%B')
-    YEAR: str = os.getenv('YEAR') or datetime.now().year
+    YEAR: str = os.getenv('YEAR') or datetime.now().strftime('%Y')
     TOKEN_LIMIT: int = os.getenv('TOKEN_LIMIT') or 4096
 
     if not OPENAI_API_KEY:

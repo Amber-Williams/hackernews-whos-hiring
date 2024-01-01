@@ -4,7 +4,7 @@ on:
     - cron: "00 00 2 * *" # runs at on the 2nd of every month
 
 jobs:
-  createTableAndPullRequest:
+  create-table:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -15,9 +15,9 @@ jobs:
 
       - name: Configure date
         run: |
-          YEAR=(date +%Y)
+          YEAR=$(date +%Y)
           echo "YEAR=${YEAR}" >> $GITHUB_ENV
-          MONTH=(LC_ALL=C date +%B)
+          MONTH=$(LC_ALL=C date +%B)
           echo "MONTH=${MONTH}" >> $GITHUB_ENV
 
       - name: Setup python
@@ -46,28 +46,17 @@ jobs:
 
       - name: Run create table
         env:
-          super_secret: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          YEAR: ${{env.YEAR}}
+          MONTH: ${{env.MONTH}}
         run: |
           source .venv/bin/activate
           poetry run python main.py
 
       - name: Create Pull Request
-        id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PAT }}
-          commit-message: Update report
-          committer: GitHub <noreply@github.com>
-          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-          signoff: false
-          branch: ${{env.MONTH}}-${{env.YEAR}}-hiring-table
+          commit-message: ${{env.MONTH}} ${{env.YEAR}} report
+          title: ${{env.MONTH}} ${{env.YEAR}} report
+          branch: ${{env.MONTH}}-${{env.YEAR}}-report
           delete-branch: true
-          title: "${{env.MONTH}} ${{env.YEAR}} report"
-          body: |
-            Automated report for ${{env.MONTH}} ${{env.YEAR}} using GitHub Actions
-          labels: |
-            automated pr
-          assignees: amber-williams
-          reviewers: amber-williams
-          milestone: 1
-          draft: false
