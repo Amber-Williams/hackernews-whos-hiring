@@ -64,8 +64,7 @@ jobs:
           delete-branch: true
           title: "${{env.MONTH}} ${{env.YEAR}} report"
           body: |
-            Create hackernews hiring table
-            - Updated ${{env.MONTH}}-${{env.YEAR}}-hiring-table.md
+            Automated report for ${{env.MONTH}} ${{env.YEAR}} using GitHub Actions
           labels: |
             automated pr
           assignees: amber-williams
