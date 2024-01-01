@@ -15,9 +15,9 @@ jobs:
 
       - name: Configure date
         run: |
-          YEAR=(date +%Y)
+          YEAR=$(date +%Y)
           echo "YEAR=${YEAR}" >> $GITHUB_ENV
-          MONTH=(LC_ALL=C date +%B)
+          MONTH=$(LC_ALL=C date +%B)
           echo "MONTH=${MONTH}" >> $GITHUB_ENV
 
       - name: Setup python
@@ -46,7 +46,9 @@ jobs:
 
       - name: Run create table
         env:
-          super_secret: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          YEAR: ${{env.YEAR}}
+          MONTH: ${{env.MONTH}}
         run: |
           source .venv/bin/activate
           poetry run python main.py
