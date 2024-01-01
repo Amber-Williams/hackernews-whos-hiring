@@ -16,9 +16,9 @@ jobs:
 
       - name: Configure date
         run: |
-          YEAR=$(date +%Y)
+          YEAR=2024
           echo "YEAR=${YEAR}" >> $GITHUB_ENV
-          MONTH=$(LC_ALL=C date +%B)
+          MONTH=December
           echo "MONTH=${MONTH}" >> $GITHUB_ENV
 
       - name: Setup python
