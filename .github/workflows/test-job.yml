@@ -51,18 +51,14 @@ jobs:
           YEAR: ${{env.YEAR}}
           MONTH: ${{env.MONTH}}
         run: |
-          source .venv/bin/activate
-          poetry run python main.py
+          touch test.txt
+          echo "Running create table" >> test.txt
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
+          token: ${{ secrets.PAT }}
           commit-message: ${{env.MONTH}} ${{env.YEAR}} report
-          committer: GitHub <noreply@github.com>
-          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-          signoff: false
           branch: ci-reports
-          delete-branch: true
           assignees: amber-williams
           reviewers: amber-williams
-          draft: false
