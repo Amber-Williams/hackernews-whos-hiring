@@ -55,22 +55,14 @@ jobs:
           poetry run python main.py
 
       - name: Create Pull Request
-        id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PAT }}
-          commit-message: Update report
+          commit-message: ${{env.MONTH}} ${{env.YEAR}} report
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
-          branch: ${{env.MONTH}}-${{env.YEAR}}-hiring-table
+          branch: ci-reports
           delete-branch: true
-          title: "${{env.MONTH}} ${{env.YEAR}} report"
-          body: |
-            Automated report for ${{env.MONTH}} ${{env.YEAR}} using GitHub Actions
-          labels: |
-            automated pr
           assignees: amber-williams
           reviewers: amber-williams
-          milestone: 1
           draft: false
