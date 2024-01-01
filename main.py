@@ -5,23 +5,41 @@ import utils
 from config import settings
 from chat_extractor import ChatExtractor
 
-BATCH_SIZE = 5
 
+data_files = utils.DataFiles()
 
-utils.create_hn_hiring_csv(settings.MONTH, settings.YEAR)
+dict_ = utils.scrape_hn_hiring_to_dict()
+df = pd.DataFrame(dict_)
+df = utils.count_tokens(df)
+data_files.write_scraped_df(df=df)
 
-hiring_text_df = pd.read_csv(f"output/hn-hiring-{settings.MONTH}-{settings.YEAR}.csv")
-test_hiring_text_df = np.array_split(hiring_text_df, BATCH_SIZE)
-
-for index, df in enumerate(test_hiring_text_df):
-    utils.parse_hiring_comment(
-        chatextractor=ChatExtractor(model_key=settings.OPENAI_API_KEY),
-        month=settings.MONTH,
-        year=settings.YEAR,
-        df=df,
-        batch=index
+batch_size = df['token_count'].sum() / settings.TOKEN_LIMIT
+batched_df = np.array_split(df, batch_size)
+chat = ChatExtractor(
+        model_key=settings.OPENAI_API_KEY,
+        model=settings.OPENAI_MODEL,
+        max_tokens=settings.TOKEN_LIMIT
     )
 
-utils.join_batch_csvs(settings.MONTH, settings.YEAR, len(test_hiring_text_df))
-utils.drop_time_wasters(settings.MONTH, settings.YEAR)
-utils.turn_into_markdown(settings.MONTH, settings.YEAR)
+processed_batches = []
+for index, batch_n_df in enumerate(batched_df):
+    try:
+        print(f"Processing... batch: {index}")
+        request_content = batch_n_df.to_dict()["text"]
+        summary_batch = chat.extract(request_content)
+
+        if not summary_batch:
+            raise ValueError(f"Parsed content of batch: {index} is empty")
+
+        summary_batch_df = pd.DataFrame.from_dict(summary_batch, orient='index')
+        summary_batch_df.index = summary_batch_df.index.astype(int)
+        batch_n_df = summary_batch_df.join(batch_n_df, how='outer')   # join parsed content with original comment text
+        data_files.write_df(df=batch_n_df, batch=index, file_name=None)
+        print(f"Saved batch: {index}")
+        processed_batches.append(index)
+    except Exception as e:
+        print(f"Unable to parse batch: {index} {e=}...continuing...")
+        continue
+
+summary_df = data_files.write_summary_df(processed_batches=processed_batches)
+data_files.write_cleaned_df(df=summary_df)

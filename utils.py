@@ -1,16 +1,86 @@
 import urllib
 from bs4 import BeautifulSoup
 import requests
+import os
+from typing import Optional, List
 
 import pandas as pd
+import tiktoken
 
 from csv_to_markdown import Csv2Markdown
-from chat_extractor import ChatExtractor
+from config import settings
 
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/117.0'
 }
+OUT_DIR_YEAR = f'./output/{settings.YEAR}'
+OUT_DIR = f'{OUT_DIR_YEAR}/{settings.MONTH}'
+TABLE_DIR = f'table/{settings.YEAR}'
+CLEAN_FILE = "clean.csv"
+SUMMARY_FILE = "summary.csv"
+SCRAPED_FILE = "scraped.csv"
+
+
+if not os.path.exists(OUT_DIR_YEAR):
+    os.mkdir(OUT_DIR_YEAR)
+
+
+class DataFiles:
+    dir = f"{OUT_DIR}"
+    dir_batch = f"{OUT_DIR}/batch"
+
+    def read_df(self, batch: Optional[int], file_name: Optional[str], index_col: Optional[int] = None):
+        if batch is not None:
+            file_path = f"{self.dir_batch}/{batch}.csv"
+            if os.path.exists(file_path):
+                return pd.read_csv(file_path, index_col=index_col)
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        return pd.read_csv(f"{self.dir}/{file_name}", index_col=index_col)
+
+    def write_df(self, df: pd.DataFrame, batch: Optional[int], file_name: Optional[str]):
+        if not os.path.exists(self.dir):
+            os.mkdir(self.dir)
+
+        if batch is not None:
+            if not os.path.exists(self.dir_batch):
+                os.mkdir(self.dir_batch)
+            df.to_csv(f"{self.dir_batch}/{batch}.csv")
+        elif file_name is not None:
+            df.to_csv(f"{self.dir}/{file_name}")
+
+    def write_scraped_df(self, df: pd.DataFrame):
+        # saves scraped data to csv
+        self.write_df(df=df, batch=None, file_name=SCRAPED_FILE)
+        return df
+
+    def write_summary_df(self, processed_batches: List[int]):
+        # Join batch CSVs into one CSV
+        batch_csvs = []
+        for batch in processed_batches:
+            batch_df = self.read_df(batch=batch, file_name=None, index_col=0)
+            batch_csvs.append(batch_df)
+        df = pd.concat(batch_csvs)
+        df = df.reset_index(drop=True)
+        self.write_df(df=df, batch=None, file_name=SUMMARY_FILE)
+        return df
+
+    def write_cleaned_df(self, df: pd.DataFrame):
+        df = df[['salary', 'job title', 'company', 'company location', 'link to apply', 'remote', 'text']]
+        # Filter out rows where 'salary' does not contain at least one number
+        df = df[df['salary'].str.contains(r'\d', na=False)]
+        df = df.reset_index(drop=True)
+
+        # clean csv save
+        self.write_df(df=df, batch=None, file_name=CLEAN_FILE)
+
+        # clean markdown save
+        clean_file = os.path.join(OUT_DIR, CLEAN_FILE)
+        md = Csv2Markdown(filepath=clean_file)
+        if not os.path.exists(TABLE_DIR):
+            os.mkdir(TABLE_DIR)
+        md.save_table(f"{TABLE_DIR}/{settings.MONTH}.md")
 
 
 def get_hn_next_page(soup, dict):
@@ -28,9 +98,9 @@ def get_hn_next_page(soup, dict):
         return dict
 
 
-def create_hn_hiring_csv(month, year):
+def scrape_hn_hiring_to_dict():
     # Get the first link from Google search results
-    text = f":news.ycombinator.com who's hiring {month} {year}"
+    text = f":news.ycombinator.com who's hiring {settings.MONTH} {settings.YEAR}"
     text = urllib.parse.quote_plus(text)
     url = 'https://google.com/search?q=' + text
     response = requests.get(url, headers=headers)
@@ -50,56 +120,14 @@ def create_hn_hiring_csv(month, year):
 
     # Continue to scrape the HN thread - pages
     get_hn_next_page(soup, hn_dict)
-
-    # Save to CSV
-    df = pd.DataFrame(hn_dict)
-    df.to_csv(f"output/hn-hiring-{month}-{year}.csv")
+    return hn_dict
 
 
-def parse_hiring_comment(chatextractor: ChatExtractor, month, year, df, batch):
-    if len(df) > 500:
-        raise Exception(f"Unable to parse batch: {batch}, too large")
-    # Use LLM to organize comment data into a dataframe
-    comment_summaries = []
-    for index, row in df.iterrows():
-        print('Processing row...', index)
-        try:
-            _row = chatextractor.extract(row['text'])
-            if _row is None:
-                continue
-            if isinstance(_row, list):
-                for _r in _row:
-                    _r["content"] = row['text']
-                    comment_summaries.append(_r)
-            else:
-                _row["content"] = row['text']
-                comment_summaries.append(_row)
-        except Exception as err:
-            print(f"Unable to parse batch: {batch} row: {index}, {err=}")
-            continue
-
-    # Save to CSV
-    comment_summaries_df = pd.DataFrame.from_dict(comment_summaries)
-    comment_summaries_df.to_csv(f"output/hn-hiring-{month}-{year}-summary-{batch}.csv")
+def count_tokens(df):
+    encoding = tiktoken.encoding_for_model(settings.OPENAI_MODEL)
+    df['token_count'] = df.apply(lambda x: len(encoding.encode(x['text'])), axis=1)
+    return df
 
 
-def join_batch_csvs(month, year, batch_size: int):
-    # Join batch CSVs into one CSV
-    batch_csvs = []
-    for i in range(batch_size):
-        batch_csvs.append(pd.read_csv(f"output/hn-hiring-{month}-{year}-summary-{i}.csv", index_col=0))
-    df = pd.concat(batch_csvs)
-    df.reset_index(drop=True).to_csv(f"output/hn-hiring-{month}-{year}-summary.csv")
-
-
-def drop_time_wasters(month, year):
-    df = pd.read_csv(f"output/hn-hiring-{month}-{year}-summary.csv")
-    df = df[['salary', 'job title', 'company', 'company location', 'link to apply', 'remote']]
-    df = df[df['salary'].notna()]
-    df = df[df['salary'] != 'Not mentioned']
-    df.reset_index(drop=True).to_csv(f"output/hn-hiring-{month}-{year}-summary-filtered.csv")
-
-
-def turn_into_markdown(month, year):
-    md = Csv2Markdown(f"output/hn-hiring-{month}-{year}-summary-filtered.csv")
-    md.save_table(f"table/hn-hiring-{month}-{year}.md")
+def str_has_num(string: str):
+    return any(char.isdigit() for char in string)

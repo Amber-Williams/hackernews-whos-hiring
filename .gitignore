@@ -163,5 +163,5 @@ cython_debug/
 # macbook
 .DS_Store
 
-# output files
-output/*.csv
+# local output files
+output/**

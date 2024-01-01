@@ -15,6 +15,7 @@ lxml = "^4.9.3"
 numpy = "^1.26.0"
 pydantic = "^2.4.2"
 pydantic-settings = "^2.0.3"
+tiktoken = "^0.5.2"
 
 [build-system]
 requires = ["poetry-core"]
