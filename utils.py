@@ -75,8 +75,11 @@ class DataFiles:
         # clean csv save
         self.write_df(df=df, batch=None, file_name=CLEAN_FILE)
 
-        # clean markdown save
-        clean_file = os.path.join(OUT_DIR, CLEAN_FILE)
+    def write_cleaned_md(self):
+        df = pd.read_csv(os.path.join(OUT_DIR, CLEAN_FILE), index_col=0)
+        df.pop('text')
+        self.write_df(df=df, batch=None, file_name="temp.csv")
+        clean_file = os.path.join(OUT_DIR, "temp.csv")
         md = Csv2Markdown(filepath=clean_file)
         if not os.path.exists(TABLE_DIR):
             os.mkdir(TABLE_DIR)

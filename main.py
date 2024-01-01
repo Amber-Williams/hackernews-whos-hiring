@@ -43,3 +43,4 @@ for index, batch_n_df in enumerate(batched_df):
 
 summary_df = data_files.write_summary_df(processed_batches=processed_batches)
 data_files.write_cleaned_df(df=summary_df)
+data_files.write_cleaned_md()
