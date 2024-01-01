@@ -15,6 +15,9 @@ data_files.write_scraped_df(df=df)
 
 batch_size = df['token_count'].sum() / settings.TOKEN_LIMIT
 batched_df = np.array_split(df, batch_size)
+if len(batched_df) > 30:
+    raise ValueError(f"Batch size is too large: {len(batched_df)}")
+
 chat = ChatExtractor(
         model_key=settings.OPENAI_API_KEY,
         model=settings.OPENAI_MODEL,
