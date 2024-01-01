@@ -24,6 +24,8 @@ chat = ChatExtractor(
 processed_batches = []
 for index, batch_n_df in enumerate(batched_df):
     try:
+        if index != 0:
+            continue
         print(f"Processing... batch: {index}")
         request_content = batch_n_df.to_dict()["text"]
         summary_batch = chat.extract(request_content)
