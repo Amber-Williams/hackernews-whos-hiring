@@ -1,0 +1,63 @@
+name: Tests - Create Hacker News hiring table script
+on:
+  push:
+    branches:
+      - aw_test_job
+
+jobs:
+  create-table:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure date
+        run: |
+          YEAR=2024
+          echo "YEAR=${YEAR}" >> $GITHUB_ENV
+          MONTH=December
+          echo "MONTH=${MONTH}" >> $GITHUB_ENV
+
+      - name: Setup python
+        id: setup-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.6.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      - name: Run create table
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          YEAR: ${{env.YEAR}}
+          MONTH: ${{env.MONTH}}
+        run: |
+          source .venv/bin/activate
+          poetry run python main.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: ${{env.MONTH}} ${{env.YEAR}} report
+          title: ${{env.MONTH}} ${{env.YEAR}} report
+          branch: ${{env.MONTH}}-${{env.YEAR}}-report
+          delete-branch: true
