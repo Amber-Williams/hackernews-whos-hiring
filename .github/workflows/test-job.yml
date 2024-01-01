@@ -5,7 +5,7 @@ on:
       - aw_test_job
 
 jobs:
-  createTableAndPullRequest:
+  create-table:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -20,45 +20,27 @@ jobs:
           echo "YEAR=${YEAR}" >> $GITHUB_ENV
           MONTH=December
           echo "MONTH=${MONTH}" >> $GITHUB_ENV
-
-      - name: Setup python
-        id: setup-python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.11
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.6.1
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v2
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-
       - name: Run create table
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          YEAR: ${{env.YEAR}}
-          MONTH: ${{env.MONTH}}
         run: |
           touch test.txt
           echo "Running create table" >> test.txt
 
+      - name: Commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "Add or update documents"
+          # Replace 'your-branch-name' with the name of the branch you want to create
+          git push origin HEAD:your-branch-name
+
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v3
         with:
-          token: ${{ secrets.PAT }}
-          commit-message: ${{env.MONTH}} ${{env.YEAR}} report
-          branch: ci-reports
-          assignees: amber-williams
-          reviewers: amber-williams
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update documents"
+          title: "Update Documents"
+          body: "This is an auto-generated PR with document updates"
+          branch: "your-branch-name" # The same branch name used in the git push command
+          delete-branch: true # Set to true to delete the branch after merge
+          draft: false
