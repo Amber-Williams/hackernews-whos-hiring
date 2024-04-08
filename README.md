@@ -1,6 +1,6 @@
 # hackernews-whos-hiring
 
-Parses the hackernew's who's hiring thread into a easy to read markdown table
+Parses the hackernew's who's hiring thread into an easy to read markdown table
 
 #### Tables
 
