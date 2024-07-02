@@ -15,3 +15,4 @@ Parses the hackernew's who's hiring thread into an easy to read markdown table
 - [April 2024](/table/2024/April.md)
 - [May 2024](/table/2024/May.md)
 - [June 2024](/table/2024/June.md)
+- [July 2024](/table/2024/July.md)
