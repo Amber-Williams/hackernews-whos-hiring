@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hackernews-whos-hiring"
-version = "0.1.0"
+version = "1.1.0"
 description = "Parses the hackernew's who's hiring thread into a quick filterable and sortable CSV"
 authors = ["amber williams <amberwilliamsdev@gmail.com>"]
 license = "MIT"
@@ -8,14 +8,14 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
-beautifulsoup4 = "^4.12.2"
-pandas = "^2.0.3"
-openai = "^0.28.1"
-lxml = "^4.9.3"
-numpy = "^1.26.0"
-pydantic = "^2.4.2"
-pydantic-settings = "^2.0.3"
-tiktoken = "^0.5.2"
+beautifulsoup4 = "4.12.3"
+pandas = "2.2.2"
+openai = "1.40.3"
+lxml = "5.2.2"
+numpy = "2.0.1"
+pydantic = "2.8.2"
+pydantic-settings = "2.4.0"
+tiktoken = "0.7.0"
 
 [build-system]
 requires = ["poetry-core"]

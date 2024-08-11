@@ -14,7 +14,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -165,3 +164,9 @@ cython_debug/
 
 # local output files
 output/**
+
+# Local TODO file
+TODO
+
+# Local debug files
+.vscode/
