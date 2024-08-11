@@ -163,10 +163,7 @@ cython_debug/
 .DS_Store
 
 # local output files
-output/**/**/batch
-output/**/**/clean.csv
-output/**/**/summary.csv
-output/**/**/temp.csv
+output/**
 
 # Local TODO file
 TODO
