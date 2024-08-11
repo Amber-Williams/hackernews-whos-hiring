@@ -171,3 +171,6 @@ output/**/**/temp.csv
 
 # Local TODO file
 TODO
+
+# Local debug files
+.vscode/
