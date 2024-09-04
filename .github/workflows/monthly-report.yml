@@ -49,6 +49,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           YEAR: ${{env.YEAR}}
           MONTH: ${{env.MONTH}}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
         run: |
           source .venv/bin/activate
           poetry run python main.py
