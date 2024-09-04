@@ -2,9 +2,6 @@ name: Create Hacker News hiring table
 on:
   schedule:
     - cron: "00 00 2 * *" # runs at on the 2nd of every month
-  push:
-    tags:
-      - "*create-table*"
 
 jobs:
   create-table:
