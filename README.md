@@ -2,6 +2,19 @@
 
 Parses the hackernew's who's hiring thread into an easy to read markdown table
 
+
+## Running the repo
+### Prerequisites
+- Python 3.10+
+- poetry
+- copy .env.example to .env and add your API keys
+### Steps
+
+```bash
+poetry install
+poetry run python main.py
+```
+
 #### Tables
 
 - [August 2023](/table/2023/august.md)
