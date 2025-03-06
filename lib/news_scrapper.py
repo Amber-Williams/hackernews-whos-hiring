@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 class NewsScrapper:
     def __init__(self, year: int, month: str):
-        self.headers = {    
+        self.headers = {
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/117.0'
             }
         self.year = year
@@ -43,18 +43,27 @@ class NewsScrapper:
             return comment_list
 
     def get_hn_hiring_posts(self):
-        # Get the first link from Google search results
-        text = f":news.ycombinator.com who's hiring {self.month} {self.year}"
-        text = urllib.parse.quote_plus(text)
-        url = 'https://google.com/search?q=' + text
+        # Get the whoishiring submissions page
+        url = 'https://news.ycombinator.com/submitted?id=whoishiring'
         response = requests.get(url, headers=self.headers)
         soup = BeautifulSoup(response.text, 'lxml')
 
-        # Scrape the HN thread
-        url = soup.find_all(class_='g')[0]
-        url = url.find('a')
-        url = url['href']
-        response = requests.get(url, headers=self.headers)
+        # Find the "Who is hiring?" post for the specified month and year
+        target_title = f"Ask HN: Who is hiring? ({self.month} {self.year})"
+        links = soup.find_all('a')
+        hiring_link = None
+
+        for link in links:
+            if link.text == target_title:
+                hiring_link = link['href']
+                break
+
+        if not hiring_link:
+            raise Exception(f"Could not find hiring post for {self.month} {self.year}")
+
+        # Get the comments from the hiring post
+        response = requests.get(f"https://news.ycombinator.com/{hiring_link}",
+                              headers=self.headers)
         soup = BeautifulSoup(response.text, 'lxml')
         comment_list = []
         comment_list = self._get_page_comments(soup, comment_list)

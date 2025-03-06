@@ -57,6 +57,7 @@ def create_report_from_post_data(year: str, month: str):
 if __name__ == "__main__":
     year = settings.YEAR
     month = settings.MONTH
+    print(f"Running for {year} {month}")
     extactor_model = DataExtractorModel(
             model_key=settings.OPENAI_API_KEY,
             model=settings.OPENAI_MODEL
