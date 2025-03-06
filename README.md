@@ -35,3 +35,5 @@ poetry run python main.py
 - [November 2024](/table/2024/November.md)
 - [December 2024](/table/2024/December.md)
 - [January 2025](/table/2025/January.md)
+- [February 2025](/table/2025/February.md)
+- [March 2025](/table/2025/March.md)
