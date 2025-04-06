@@ -47,7 +47,7 @@ class DataExtractorModel:
                     {"role": "user", "content": content_json},
                 ],
                 temperature=0.0,
-                timeout=Timeout(60),
+                timeout=Timeout(200),
             )
             return completion.choices[0].message.parsed.postings
         except ValidationError as e:

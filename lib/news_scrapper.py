@@ -1,4 +1,3 @@
-import urllib
 import requests
 from typing import List
 
@@ -22,9 +21,15 @@ class NewsScrapper:
             # We only care about comments with a pipe character
             # because it is in the format outlined by HN's whoishiring
             if "|" in comment.text:
+                comment_datetime = comment_el.find(class_="comhead").find(class_="age")
+                comment_datetime = comment_datetime.get('title')
+                comment_datetime = comment_datetime.split(" ")[0]
+
                 comment_list.append({
                     "comment_text": comment.text,
-                    "comment_id": comment_el['id']
+                    "comment_id": comment_el['id'],
+                    "comment_datetime": comment_datetime,
+                    "comment_author": comment_el.find(class_="comhead").find(class_="hnuser").text,
                 })
         return comment_list
 
