@@ -44,6 +44,7 @@
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
         .message {
             padding: 10px;
             margin-top: 10px;
@@ -58,7 +59,7 @@
             color: #2e7d32;
         }
         #sqlQuery {
-            width: 100%;
+            width: -webkit-fill-available;
             height: 80px;
             font-family: monospace;
             padding: 8px;
@@ -77,23 +78,31 @@
         button:hover {
             background-color: #45a049;
         }
+        button.secondary {
+            background-color: #6c757d;
+        }
+        button.secondary:hover {
+            background-color: #5a6268;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>SQLite Database Table Viewer</h1>
+        <h1>HN Jobs Database Table Viewer</h1>
 
         <div class="controls">
-            <h2>Database: <span id="dbName">database.db</span></h2>
             <div class="loading" id="loadingIndicator">Loading database...</div>
 
             <div id="tablesSection" style="display: none;">
-                <h2>Database Tables</h2>
-                <div class="tables-list" id="tablesList"></div>
-
                 <h2>SQL Query</h2>
-                <textarea id="sqlQuery" placeholder="SELECT * FROM table_name LIMIT 100"></textarea>
-                <button id="executeQuery">Execute Query</button>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button id="last30DaysFilter" class="secondary">Show Last 30 Days</button>
+                    <button id="sfRemoteFilter" class="secondary">Show Remote Jobs in San Francisco</button>
+                </div>
+                <textarea id="sqlQuery" placeholder="SELECT * FROM jobs LIMIT 100"></textarea>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px; justify-content: flex-end;">
+                    <button id="executeQuery">Execute Query</button>
+                </div>
             </div>
         </div>
 
@@ -115,18 +124,16 @@
             let SQL = null;
             const DB_FILE_NAME = 'jobs.db';
 
-            const dbNameSpan = document.getElementById('dbName');
             const loadingIndicator = document.getElementById('loadingIndicator');
             const tablesSection = document.getElementById('tablesSection');
-            const tablesList = document.getElementById('tablesList');
             const sqlQueryInput = document.getElementById('sqlQuery');
             const executeQueryBtn = document.getElementById('executeQuery');
+            const last30DaysFilterBtn = document.getElementById('last30DaysFilter');
+            const sfRemoteFilterBtn = document.getElementById('sfRemoteFilter');
             const messageDiv = document.getElementById('message');
             const resultsTable = document.getElementById('resultsTable');
             const tableHead = document.getElementById('tableHead');
             const tableBody = document.getElementById('tableBody');
-
-            dbNameSpan.textContent = DB_FILE_NAME;
 
             initSqlJs({
                 locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
@@ -147,13 +154,6 @@
                 const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
 
                 if (tables && tables[0] && tables[0].values) {
-                    let tableOptions = '';
-                    tables[0].values.forEach(table => {
-                        const tableName = table[0];
-                        tableOptions += `<button class="table-btn" data-table="${tableName}">${tableName}</button> `;
-                    });
-
-                    tablesList.innerHTML = tableOptions;
                     loadingIndicator.style.display = 'none';
                     tablesSection.style.display = 'block';
 
@@ -177,6 +177,19 @@
             });
 
             executeQueryBtn.addEventListener('click', executeQuery);
+            last30DaysFilterBtn.addEventListener('click', function() {
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                const formattedDate = thirtyDaysAgo.toISOString().split('T')[0];
+
+                sqlQueryInput.value = `SELECT * FROM jobs WHERE post_date >= '${formattedDate}' ORDER BY post_date DESC`;
+                executeQuery();
+            });
+
+            document.getElementById('sfRemoteFilter').addEventListener('click', function() {
+                sqlQueryInput.value = `SELECT * FROM jobs WHERE (city LIKE '%San Francisco%' OR city LIKE '%SF%') AND (remote IS 'yes') ORDER BY post_date DESC`;
+                executeQuery();
+            });
 
             function executeQuery() {
                 if (!db) {
@@ -212,14 +225,18 @@
                     let rows = "";
                     values.forEach(row => {
                         let rowHtml = "<tr>";
-                        row.forEach(cell => {
+                        row.forEach((cell, index) => {
                             let displayValue = cell === null ? "NULL" : String(cell);
 
                             if (displayValue.length > 150) {
                                 displayValue = displayValue.substring(0, 150) + "...";
                             }
 
-                            rowHtml += `<td>${displayValue}</td>`;
+                            if (index === 0 && cell !== null) {
+                                rowHtml += `<td><a href="https://news.ycombinator.com/item?id=${cell}" target="_blank">${displayValue}</a></td>`;
+                            } else {
+                                rowHtml += `<td>${displayValue}</td>`;
+                            }
                         });
                         rowHtml += "</tr>";
                         rows += rowHtml;
