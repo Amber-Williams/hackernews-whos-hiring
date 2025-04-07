@@ -72,6 +72,12 @@
             margin-bottom: 10px;
             margin-top: 0;
         }
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            margin-top: 0;
+        }
         p {
             margin-top: 0;
             font-size: 16px;
@@ -125,14 +131,12 @@
             color: #24292e !important;
         }
 
-
         .schema-container {
             display: none;
             margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
+            padding: 16px;
+            background-color: #f5f5f5;
             border-radius: 5px;
-            border: 1px solid #dee2e6;
         }
         .schema-table {
             width: 100%;
@@ -174,7 +178,7 @@
         <p> A tool to query recent HN "Who's Hiring" job postings. </p>
 
         <div id="schemaContainer" class="schema-container">
-            <h3>Database Schema</h3>
+            <h2>Database Schema</h2>
             <table id="schemaTable" class="schema-table">
                 <thead>
                     <tr>
@@ -341,7 +345,7 @@
                     });
 
                     schemaTableBody.innerHTML = schemaHtml;
-                    schemaContainer.style.display = schemaContainer.style.display === 'none' ? 'block' : 'none';
+                    schemaContainer.style.display = schemaContainer.style.display === 'block' ? 'none': 'block';
                 } catch (err) {
                     showMessage(`Error fetching schema: ${err.message}`, true);
                 }
