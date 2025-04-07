@@ -36,7 +36,7 @@
         .container {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 8px;
         }
         .controls {
             display: flex;
@@ -65,6 +65,17 @@
         }
         tr:nth-child(even) {
             background-color: #f9f9f9;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            margin-top: 0;
+        }
+        p {
+            margin-top: 0;
+            font-size: 16px;
+            margin-bottom: 20px;
         }
 
         .message {
@@ -96,15 +107,57 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            border: 1px solid #4CAF50;
         }
         button:hover {
             background-color: #45a049;
         }
         button.secondary {
+            border: 1px solid #6c757d;
             background-color: #6c757d;
         }
         button.secondary:hover {
             background-color: #5a6268;
+        }
+
+        .outlined {
+            background-color: transparent !important;
+            color: #24292e !important;
+        }
+
+
+        .schema-container {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .schema-table {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .schema-table th {
+            background-color: #e9ecef;
+        }
+        .schema-table td, .schema-table th {
+            padding: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .column-description {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 4px;
+        }
+        .query-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .query-header h2 {
+            margin: 0;
         }
     </style>
 </head>
@@ -117,13 +170,33 @@
     </a>
 
     <div class="container">
-        <h1>HN Jobs Database Table Viewer</h1>
+        <h1>HN Who's Hiring Database</h1>
+        <p> A tool to query recent HN "Who's Hiring" job postings. </p>
+
+        <div id="schemaContainer" class="schema-container">
+            <h3>Database Schema</h3>
+            <table id="schemaTable" class="schema-table">
+                <thead>
+                    <tr>
+                        <th>Table Name</th>
+                        <th>Column Name</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="schemaTableBody"></tbody>
+            </table>
+        </div>
 
         <div class="controls">
             <div class="loading" id="loadingIndicator">Loading database...</div>
 
+
             <div id="tablesSection" style="display: none;">
-                <h2>SQL Query</h2>
+                <div class="query-header">
+                    <h2>SQL Query</h2>
+                    <button id="showSchema" class="secondary outlined">Toggle Schema</button>
+                </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <button id="last30DaysFilter" class="secondary">Show Last 30 Days</button>
                     <button id="sfRemoteFilter" class="secondary">Show Remote Jobs in San Francisco</button>
@@ -159,6 +232,9 @@
             const executeQueryBtn = document.getElementById('executeQuery');
             const last30DaysFilterBtn = document.getElementById('last30DaysFilter');
             const sfRemoteFilterBtn = document.getElementById('sfRemoteFilter');
+            const showSchemaBtn = document.getElementById('showSchema');
+            const schemaContainer = document.getElementById('schemaContainer');
+            const schemaTableBody = document.getElementById('schemaTableBody');
             const messageDiv = document.getElementById('message');
             const resultsTable = document.getElementById('resultsTable');
             const tableHead = document.getElementById('tableHead');
@@ -218,6 +294,57 @@
             document.getElementById('sfRemoteFilter').addEventListener('click', function() {
                 sqlQueryInput.value = `SELECT * FROM jobs WHERE (city LIKE '%San Francisco%' OR city LIKE '%SF%') AND (remote IS 'yes') ORDER BY post_date DESC`;
                 executeQuery();
+            });
+
+            showSchemaBtn.addEventListener('click', function() {
+                if (!db) {
+                    showMessage("Database is not loaded yet.", true);
+                    return;
+                }
+
+                try {
+                    const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
+                    let schemaHtml = '';
+
+                    // Column descriptions
+                    const columnDescriptions = {
+                        'post_link_id': 'Unique identifier for the HN comment id',
+                        'post_date': 'Date when the job was posted on HN',
+                        'company': 'Company name offering the position',
+                        'job_title': 'Title of the job position',
+                        'employment_type': 'Enum of employment types (full-time, part-time, contract, intern)',
+                        'salary': 'Salary information if provided',
+                        'remote': 'Enum of remote options (yes/no/hybrid)',
+                        'city': 'City where the job is located. It can also be a list of listed locations if multiple locations are listed.',
+                        'country': 'Country where the job is located',
+                        'languages_frameworks': 'Programming languages and frameworks required/preferred',
+                        'remote_rules': 'Specific rules or requirements for remote work',
+                        'how_to_apply': 'Instructions for applying to the position',
+                        'post_username': 'HN username of the person who posted the job'
+                    };
+
+                    tables[0].values.forEach(table => {
+                        const tableName = table[0];
+                        const tableInfo = db.exec(`PRAGMA table_info(${tableName})`)[0];
+
+                        tableInfo.values.forEach((column, index) => {
+                            const columnName = column[1];
+                            schemaHtml += `
+                                <tr>
+                                    ${index === 0 ? `<td rowspan="${tableInfo.values.length}">${tableName}</td>` : ''}
+                                    <td>${columnName}</td>
+                                    <td>${columnDescriptions[columnName] || ''}</td>
+                                    <td>${column[2]}</td>
+                                </tr>
+                            `;
+                        });
+                    });
+
+                    schemaTableBody.innerHTML = schemaHtml;
+                    schemaContainer.style.display = schemaContainer.style.display === 'none' ? 'block' : 'none';
+                } catch (err) {
+                    showMessage(`Error fetching schema: ${err.message}`, true);
+                }
             });
 
             function executeQuery() {
