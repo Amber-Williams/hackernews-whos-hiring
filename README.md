@@ -1,13 +1,17 @@
 # hackernews-whos-hiring
 
-Parses the hackernew's who's hiring thread into an easy to read markdown table
+Automatically scraps and parses monthly hackernew's who's hiring thread into easy to read markdown table and web accessible [SQLite database](https://amber-williams.github.io/hackernews-whos-hiring/).
 
+![App Screenshot](app.png)
 
 ## Running the repo
+
 ### Prerequisites
+
 - Python 3.10+
 - poetry
 - copy .env.example to .env and add your API keys
+
 ### Steps
 
 ```bash
@@ -17,11 +21,18 @@ poetry run python main.py
 
 #### Tables
 
-- [August 2023](/table/2023/august.md)
-- [September 2023](/table/2023/september.md)
-- [October 2023](/table/2023/october.md)
-- [November 2023](/table/2023/november.md)
-- [December 2023](/table/2023/december.md)
+- [January 2023](/table/2023/January.md)
+- [February 2023](/table/2023/February.md)
+- [March 2023](/table/2023/March.md)
+- [April 2023](/table/2023/April.md)
+- [May 2023](/table/2023/May.md)
+- [June 2023](/table/2023/June.md)
+- [July 2023](/table/2023/July.md)
+- [August 2023](/table/2023/August.md)
+- [September 2023](/table/2023/September.md)
+- [October 2023](/table/2023/October.md)
+- [November 2023](/table/2023/November.md)
+- [December 2023](/table/2023/December.md)
 - [January 2024](/table/2024/January.md)
 - [February 2024](/table/2024/February.md)
 - [March 2024](/table/2024/March.md)
