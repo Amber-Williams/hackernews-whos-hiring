@@ -17,10 +17,12 @@ Automatically scraps and parses monthly hackernew's who's hiring thread into eas
 ```bash
 poetry install
 poetry run python main.py
+poetry run python final_report.py
 ```
 
 #### Tables
 
+- [December 2024](/table/2022/December.md)
 - [January 2023](/table/2023/January.md)
 - [February 2023](/table/2023/February.md)
 - [March 2023](/table/2023/March.md)
