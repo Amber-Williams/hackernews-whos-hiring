@@ -68,12 +68,13 @@ jobs:
           source .venv/bin/activate
           poetry run python main.py
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          base: develop
-          commit-message: ${{env.MONTH}} ${{env.YEAR}} report
-          title: ${{env.MONTH}} ${{env.YEAR}} report
-          branch: ${{env.MONTH}}-${{env.YEAR}}-report
-          delete-branch: true
-          reviewers: amber-williams
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit & push changes
+        run: |
+          git add .
+          git commit -m "${MONTH} ${YEAR} report" || echo "No changes to commit"
+          git push
