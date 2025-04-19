@@ -3,6 +3,7 @@ from urllib.parse import urlparse, parse_qs
 from datetime import datetime
 
 from bs4 import BeautifulSoup
+import sqlite3
 
 class NewsScrapper:
     def __init__(self, year: int, month: str):
@@ -41,7 +42,6 @@ class NewsScrapper:
 
         return thread_id
 
-
     def filter_unseen_posts(self, post_ids):
         """
         Filter out post IDs that already exist in the seen_posts table of the jobs.db database.
@@ -52,33 +52,22 @@ class NewsScrapper:
         Returns:
             A list containing only the post IDs that haven't been seen before
         """
-        import sqlite3
 
-        # Connect to the database
         conn = sqlite3.connect("jobs.db")
         cursor = conn.cursor()
 
-        # Check if the seen_posts table exists
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='seen_posts'")
         if not cursor.fetchone():
-            # If table doesn't exist, all posts are unseen
             conn.close()
             return list(post_ids)
 
-        # Convert post_ids to a format suitable for SQL IN clause
         placeholders = ','.join(['?'] * len(post_ids))
 
-        # Query to find which IDs already exist in the database
         query = f"SELECT comment_id FROM seen_posts WHERE comment_id IN ({placeholders})"
         cursor.execute(query, list(post_ids))
-
-        # Get the list of seen IDs
         seen_ids = {row[0] for row in cursor.fetchall()}
-
-        # Close the connection
         conn.close()
 
-        # Return only the unseen IDs
         return [post_id for post_id in post_ids if post_id not in seen_ids]
 
     def get_hn_hiring_posts(self):
