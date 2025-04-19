@@ -1,12 +1,8 @@
 name: Create Hacker News hiring table
 on:
   schedule:
-    # run twice on 1,2,3 of the month at 12am and 12pm
-    - cron: "00 00,12 1,2,3 * *"
-    # run daily until 15th of the month at 1am
-    - cron: "00 00 4,5,6,7,8,9,10,11,12,13,14,15 * *"
-    # run on the 28th of the month at 12am
-    - cron: "00 00 28 * *"
+    # run on the 28th of the month at 1am
+    - cron: "00 01 28 * *"
 
 permissions:
   contents: write
@@ -63,14 +59,15 @@ jobs:
           OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
         run: |
           source .venv/bin/activate
-          poetry run python main.py
+          poetry run python final_report.py
+          echo "- [${MONTH} ${YEAR}](/table/${YEAR}/${MONTH}.md)" >> README.md
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          base: develop
-          commit-message: ${{env.MONTH}} ${{env.YEAR}} report
-          title: ${{env.MONTH}} ${{env.YEAR}} report
-          branch: ${{env.MONTH}}-${{env.YEAR}}-report
+          base: main
+          commit-message: ${{env.MONTH}} ${{env.YEAR}} final report
+          title: ${{env.MONTH}} ${{env.YEAR}} final report
+          branch: ${{env.MONTH}}-${{env.YEAR}}-final-report
           delete-branch: true
           reviewers: amber-williams

@@ -1,0 +1,30 @@
+name: Auto-merge Dependabot PRs
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure date and branch name
+        run: |
+          YEAR=$(date +%Y)
+          MONTH=$(LC_ALL=C date +%B)
+          echo "BRANCH_NAME=${MONTH}-${YEAR}-report" >> $GITHUB_ENV
+      - name: Approve a PR
+        if: ${{ github.actor == github.repository_owner && github.event.pull_request.head.ref == env.BRANCH_NAME }}
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Enable auto-merge for Dependabot PRs
+        if: ${{ github.actor == github.repository_owner && github.event.pull_request.head.ref == env.BRANCH_NAME }}
+        run: gh pr merge --auto --rebase "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
