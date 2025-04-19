@@ -1,0 +1,12 @@
+name: Test PR Trigger
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "PR test worked"
