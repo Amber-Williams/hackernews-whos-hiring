@@ -70,4 +70,6 @@ jobs:
           title: ${{env.MONTH}} ${{env.YEAR}} final report
           branch: ${{env.MONTH}}-${{env.YEAR}}-final-report
           delete-branch: true
-          reviewers: amber-williams
+          reviewers: ${{github.repository_owner}}
+          committer: amber williams <ambercwilliams91@gmail.com>
+          author: amber williams <ambercwilliams91@gmail.com>
