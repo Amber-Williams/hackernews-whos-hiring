@@ -1,5 +1,6 @@
 import requests
-from typing import List
+from urllib.parse import urlparse, parse_qs
+from datetime import datetime
 
 from bs4 import BeautifulSoup
 
@@ -11,43 +12,7 @@ class NewsScrapper:
         self.year = year
         self.month = month
 
-    def _get_page_comments(self, soup, comment_list: List[dict]):
-        comments = soup.find_all(class_="comtr")
-        for comment_el in comments:
-            comment = comment_el.find(class_="commtext")
-            # Skip if comment was deleted
-            if comment is None:
-                continue
-            # We only care about comments with a pipe character
-            # because it is in the format outlined by HN's whoishiring
-            if "|" in comment.text:
-                comment_datetime = comment_el.find(class_="comhead").find(class_="age")
-                comment_datetime = comment_datetime.get('title')
-                comment_datetime = comment_datetime.split(" ")[0]
-
-                comment_list.append({
-                    "comment_text": comment.text,
-                    "comment_id": comment_el['id'],
-                    "comment_datetime": comment_datetime,
-                    "comment_author": comment_el.find(class_="comhead").find(class_="hnuser").text,
-                })
-        return comment_list
-
-    def _get_next_page(self, soup, comment_list: List[dict]):
-        if soup.find(class_='morelink'):
-            next_url = soup.find(class_='morelink')
-            next_url = next_url['href']
-            response = requests.get(f"https://news.ycombinator.com/{next_url}",
-                                    headers=self.headers,
-                                    timeout=30
-                                    )
-            soup = BeautifulSoup(response.text, 'lxml')
-            _comment_list = self._get_page_comments(soup, comment_list)
-            return self._get_next_page(soup, _comment_list)
-        else:
-            return comment_list
-
-    def get_hn_hiring_posts(self):
+    def get_hn_hiring_thread_id(self):
         # Get the whoishiring submissions page
         url = 'https://news.ycombinator.com/submitted?id=whoishiring'
         response = requests.get(url, headers=self.headers)
@@ -66,11 +31,102 @@ class NewsScrapper:
         if not hiring_link:
             raise Exception(f"Could not find hiring post for {self.month} {self.year}")
 
-        # Get the comments from the hiring post
-        response = requests.get(f"https://news.ycombinator.com/{hiring_link}",
-                              headers=self.headers)
-        soup = BeautifulSoup(response.text, 'lxml')
+        url = f"https://news.ycombinator.com/{hiring_link}"
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        thread_id = query_params.get('id', [None])[0]
+
+        if not thread_id:
+            raise Exception(f"Could not find thread id for {self.month} {self.year}")
+
+        return thread_id
+
+
+    def filter_unseen_posts(self, post_ids):
+        """
+        Filter out post IDs that already exist in the seen_posts table of the jobs.db database.
+
+        Args:
+            post_ids: A list or set of post IDs to filter
+
+        Returns:
+            A list containing only the post IDs that haven't been seen before
+        """
+        import sqlite3
+
+        # Connect to the database
+        conn = sqlite3.connect("jobs.db")
+        cursor = conn.cursor()
+
+        # Check if the seen_posts table exists
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='seen_posts'")
+        if not cursor.fetchone():
+            # If table doesn't exist, all posts are unseen
+            conn.close()
+            return list(post_ids)
+
+        # Convert post_ids to a format suitable for SQL IN clause
+        placeholders = ','.join(['?'] * len(post_ids))
+
+        # Query to find which IDs already exist in the database
+        query = f"SELECT comment_id FROM seen_posts WHERE comment_id IN ({placeholders})"
+        cursor.execute(query, list(post_ids))
+
+        # Get the list of seen IDs
+        seen_ids = {row[0] for row in cursor.fetchall()}
+
+        # Close the connection
+        conn.close()
+
+        # Return only the unseen IDs
+        return [post_id for post_id in post_ids if post_id not in seen_ids]
+
+    def get_hn_hiring_posts(self):
         comment_list = []
-        comment_list = self._get_page_comments(soup, comment_list)
-        # Continue to scrape the HN thread - pages
-        return comment_list
+        seen_comment_ids = set()
+        thread_id = self.get_hn_hiring_thread_id()
+
+        # Get the hiring thread
+        response = requests.get(
+            url=f"https://hacker-news.firebaseio.com/v0/item/{thread_id}.json",
+            headers=self.headers,
+            timeout=30
+            )
+        data = response.json()
+        thread_kids = data['kids']
+        thread_kids = self.filter_unseen_posts(thread_kids)
+
+        # Get level 1 comments
+        for kid in thread_kids:
+            seen_comment_ids.add(kid)
+
+            response = requests.get(
+                url=f"https://hacker-news.firebaseio.com/v0/item/{kid}.json",
+                headers=self.headers,
+                timeout=30
+                )
+            kid_data = response.json()
+            html_content = kid_data.get("text", "")
+
+            if not html_content or "|" not in html_content:
+                continue
+
+            # inject full links into text as HN shortens links with ellipses after 60 characters
+            soup = BeautifulSoup(html_content, 'lxml')
+            for link in soup.find_all('a'):
+                href = link.get('href')
+                if href:
+                    link.replace_with(href)
+                else:
+                    link.unwrap()
+            plain_text = soup.get_text(separator='\n', strip=True)
+            comment_datetime = datetime.fromtimestamp(data['time']).strftime('%Y-%m-%dT%H:%M:%S')
+
+            comment_list.append({
+                "comment_text": plain_text,
+                "comment_id": kid,
+                "comment_datetime": comment_datetime,
+                "comment_author": kid_data['by'],
+            })
+
+        return seen_comment_ids, comment_list
