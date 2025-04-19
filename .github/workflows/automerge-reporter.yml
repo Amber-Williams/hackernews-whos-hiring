@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  dependabot:
+  merge-pr:
     runs-on: ubuntu-latest
     steps:
       - name: Configure date and branch name

@@ -76,4 +76,5 @@ jobs:
           title: ${{env.MONTH}} ${{env.YEAR}} report
           branch: ${{env.MONTH}}-${{env.YEAR}}-report
           delete-branch: true
-          reviewers: amber-williams
+          reviewers: ${{github.repository_owner}}
+          author: ${{github.repository_owner}}
