@@ -194,5 +194,50 @@ def create_report_from_post_data(year: str, month: str):
     data_file = DataFile(read_dir=f"./output/{year}/{month}",
                          write_dir=f"./table/{year}")
     df = get_month_jobs_from_db(year, month)
-    data_file.write_df(df=df, file_name="final_report.csv")
-    data_file.write_md_from_csv(csv_file_name="final_report.csv", md_file_name=f"{month}.md")
+
+    # Reverse mapping to match JobPostingFormatted output that legacy markdown tables use
+    df['Post Link'] = df['post_link_id'].apply(
+        lambda pid: f"[Post link](https://news.ycombinator.com/item?id={pid})"
+    )
+    column_mapping = {
+        'post_link_id': 'Post ID',
+        'post_date': 'Post Date',
+        'post_username': 'Post Username',
+        'company': 'Company',
+        'job_title': 'Job Title',
+        'employment_type': 'Employment Type',
+        'salary': 'Salary',
+        'remote': 'Remote',
+        'city': 'City',
+        'country': 'Country',
+        'languages_frameworks': 'Languages and Frameworks',
+        'remote_rules': 'Remote Rules',
+        'how_to_apply': 'How to Apply',
+    }
+    df = df.rename(columns=column_mapping)
+    final_columns_order = [
+        "Post ID",
+        "Post Link",
+        "Post Date",
+        "Post Username",
+        "Company",
+        "Job Title",
+        "Employment Type",
+        "Salary",
+        "Remote",
+        "City",
+        "Country",
+        "Languages and Frameworks",
+        "Remote Rules",
+        "How to Apply",
+    ]
+    df_final = df[final_columns_order]
+
+    # Save file locally to support legacy DataFile logic
+    csv_path = f"{data_file.read_dir}/final_report.csv"
+    df_final.to_csv(csv_path, index=False)
+
+    data_file.write_md_from_csv(
+        csv_file_name="final_report.csv",
+        md_file_name=f"{month}.md"
+    )
