@@ -109,7 +109,7 @@ class NewsScrapper:
                 else:
                     link.unwrap()
             plain_text = soup.get_text(separator='\n', strip=True)
-            comment_datetime = datetime.fromtimestamp(data['time']).strftime('%Y-%m-%dT%H:%M:%S')
+            comment_datetime = datetime.fromtimestamp(kid_data['time']).strftime('%Y-%m-%dT%H:%M:%S')
 
             comment_list.append({
                 "comment_text": plain_text,
