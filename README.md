@@ -2,7 +2,7 @@
 
 Automatically scraps and parses monthly hackernew's who's hiring thread into easy to read markdown table and web accessible [SQLite database](https://amber-williams.github.io/hackernews-whos-hiring/).
 
-![App Screenshot](app.png)
+![App Screenshot](media/app.png)
 
 ## Running the repo
 
