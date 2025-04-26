@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SQLite Table Viewer</title>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="518fa433-95b6-419a-9ed1-73878964bbd5"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -248,8 +249,6 @@
                 locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
             }).then(function(SQL_) {
                 SQL = SQL_;
-                console.log("SQL.js initialized");
-
                 return fetch(DB_FILE_NAME);
             }).then(response => {
                 if (!response.ok) {
@@ -282,11 +281,12 @@
             }).catch(err => {
                 showMessage(`Error loading database: ${err.message}`, true);
                 loadingIndicator.style.display = 'none';
-                console.error(err);
             });
 
             executeQueryBtn.addEventListener('click', executeQuery);
             last30DaysFilterBtn.addEventListener('click', function() {
+                umami.track('latest-query-buttton');
+
                 const thirtyDaysAgo = new Date();
                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
                 const formattedDate = thirtyDaysAgo.toISOString().split('T')[0];
@@ -296,11 +296,15 @@
             });
 
             document.getElementById('sfRemoteFilter').addEventListener('click', function() {
+                umami.track('sf-remote-query-buttton');
+
                 sqlQueryInput.value = `SELECT * FROM jobs WHERE (city LIKE '%San Francisco%' OR city LIKE '%SF%') AND (remote IS 'yes') ORDER BY post_date DESC`;
                 executeQuery();
             });
 
             showSchemaBtn.addEventListener('click', function() {
+                umami.track('schema-button');
+
                 if (!db) {
                     showMessage("Database is not loaded yet.", true);
                     return;
@@ -371,7 +375,7 @@
                         resultsTable.style.display = 'none';
                         return;
                     }
-
+                    umami.track('manual-query-button', {query});
                     const columns = results[0].columns;
                     const values = results[0].values;
 
