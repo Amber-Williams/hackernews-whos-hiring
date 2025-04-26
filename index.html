@@ -190,6 +190,40 @@
         .query-header h2 {
             margin: 0;
         }
+
+        .export-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .export-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 140px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 4px;
+            overflow: hidden; /* Ensures border-radius applies to children */
+            right: 0; /* Align dropdown to the right edge of the button */
+            margin-top: 2px; /* Small gap between button and dropdown */
+        }
+
+        .export-dropdown-content a {
+            color: black;
+            padding: 10px 14px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+        }
+
+        .export-dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        .export-container .show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -234,6 +268,13 @@
                 </div>
                 <textarea id="sqlQuery" placeholder="SELECT * FROM jobs LIMIT 100"></textarea>
                 <div style="display: flex; gap: 10px; margin-bottom: 10px; justify-content: flex-end;">
+                    <div class="export-container">
+                        <button id="exportButton" class="secondary">Export Results</button>
+                        <div id="exportDropdown" class="export-dropdown-content">
+                            <a href="#" id="exportCSV">Export as CSV</a>
+                            <a href="#" id="exportJSON">Export as JSON</a>
+                        </div>
+                    </div>
                     <button id="executeQuery">Execute Query</button>
                 </div>
             </div>
@@ -271,6 +312,11 @@
             const tableHead = document.getElementById('tableHead');
             const tableBody = document.getElementById('tableBody');
 
+            const exportButton = document.getElementById('exportButton');
+            const exportDropdown = document.getElementById('exportDropdown');
+            const exportCSVBtn = document.getElementById('exportCSV');
+            const exportJSONBtn = document.getElementById('exportJSON');
+
             initSqlJs({
                 locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
             }).then(function(SQL_) {
@@ -307,6 +353,101 @@
             }).catch(err => {
                 showMessage(`Error loading database: ${err.message}`, true);
                 loadingIndicator.style.display = 'none';
+            });
+
+            // Toggle dropdown visibility
+            exportButton.addEventListener('click', function(event) {
+                event.stopPropagation(); // Prevent click from immediately closing dropdown
+                exportDropdown.classList.toggle('show');
+            });
+
+            // Close dropdown if clicked outside
+            window.addEventListener('click', function(event) {
+                if (!exportButton.contains(event.target)) {
+                    if (exportDropdown.classList.contains('show')) {
+                        exportDropdown.classList.remove('show');
+                    }
+                }
+            });
+
+                        // Function to extract data from the results table
+                        function getTableData() {
+                const data = [];
+                const headers = Array.from(tableHead.querySelectorAll('tr th')).map(th => th.textContent);
+                const rows = tableBody.querySelectorAll('tr');
+
+                rows.forEach(row => {
+                    const rowData = {};
+                    const cells = row.querySelectorAll('td');
+                    headers.forEach((header, index) => {
+                        // Special handling for the first cell (link) to get the ID text
+                        if (index === 0 && cells[index].querySelector('a')) {
+                            rowData[header] = cells[index].querySelector('a').textContent;
+                        } else {
+                            rowData[header] = cells[index].textContent;
+                        }
+                    });
+                    data.push(rowData);
+                });
+                return { headers, data };
+            }
+
+            // Function to download data as a file
+            function downloadFile(filename, content, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }
+
+            // Export to CSV
+            exportCSVBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                umami.track('export-csv-button');
+                const { headers, data } = getTableData();
+                if (data.length === 0) {
+                    showMessage("No data in the table to export.", true);
+                    exportDropdown.classList.remove('show');
+                    return;
+                }
+
+                let csvContent = headers.join(',') + '\n';
+                data.forEach(row => {
+                    const values = headers.map(header => {
+                        let cellValue = row[header] || '';
+                        // Basic CSV escaping (wrap in quotes if it contains comma or quote)
+                        if (cellValue.includes(',') || cellValue.includes('"')) {
+                            cellValue = `"${cellValue.replace(/"/g, '""')}"`;
+                        }
+                        return cellValue;
+                    });
+                    csvContent += values.join(',') + '\n';
+                });
+
+                const timestamp = new Date().toISOString().replace(/[:.-]/g, '_');
+                downloadFile(`hn_hiring_export_${timestamp}.csv`, csvContent, 'text/csv;charset=utf-8;');
+                exportDropdown.classList.remove('show');
+            });
+
+            // Export to JSON
+            exportJSONBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                umami.track('export-json-button');
+                const { data } = getTableData(); // Headers are keys in the objects
+                 if (data.length === 0) {
+                    showMessage("No data in the table to export.", true);
+                    exportDropdown.classList.remove('show');
+                    return;
+                }
+
+                const jsonContent = JSON.stringify(data, null, 2); // Pretty print JSON
+                const timestamp = new Date().toISOString().replace(/[:.-]/g, '_');
+                downloadFile(`hn_hiring_export_${timestamp}.json`, jsonContent, 'application/json;charset=utf-8;');
+                exportDropdown.classList.remove('show');
             });
 
             executeQueryBtn.addEventListener('click', executeQuery);
@@ -452,6 +593,8 @@
                 }
             }
         });
+
+
     </script>
 </body>
 </html>
