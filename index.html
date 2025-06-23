@@ -297,6 +297,8 @@
             let db = null;
             let SQL = null;
             const DB_FILE_NAME = 'jobs.db';
+            const DAILY_CACHE_HASH = new Date().toISOString().split('T')[0]
+
 
             const loadingIndicator = document.getElementById('loadingIndicator');
             const tablesSection = document.getElementById('tablesSection');
@@ -321,7 +323,7 @@
                 locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
             }).then(function(SQL_) {
                 SQL = SQL_;
-                return fetch(DB_FILE_NAME);
+                return fetch(`${DB_FILE_NAME}?v=${DAILY_CACHE_HASH}`);
             }).then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
