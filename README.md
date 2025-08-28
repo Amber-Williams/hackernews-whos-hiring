@@ -52,4 +52,4 @@ poetry run python final_report.py
 - [March 2025](/table/2025/March.md)
 - [April 2025](/table/2025/April.md)
 - [May 2025](/table/2025/May.md)
-- [July 2025](/table/2025/July.md)
+- [August 2025](/table/2025/August.md)
