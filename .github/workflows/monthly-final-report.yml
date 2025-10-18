@@ -16,9 +16,20 @@ jobs:
         working-directory: ./
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout develop branch (for DB)
+        uses: actions/checkout@v4
         with:
-          ref: "develop"
+          ref: develop
+          path: develop
+
+      - name: Checkout main branch (for README)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Copy database to main checkout
+        run: cp develop/jobs.db main/jobs.db
 
       - name: Configure date
         run: |
@@ -44,20 +55,21 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v4
         with:
-          path: .venv
+          path: main/.venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
 
-      - name: Run workflow
+      - name: Generate final report and update README
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          YEAR: ${{env.YEAR}}
-          MONTH: ${{env.MONTH}}
+          YEAR: ${{ env.YEAR }}
+          MONTH: ${{ env.MONTH }}
           OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
         run: |
+          cd main
           source .venv/bin/activate
           poetry run python final_report.py
           echo "- [${MONTH} ${YEAR}](/table/${YEAR}/${MONTH}.md)" >> README.md
