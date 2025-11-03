@@ -61,6 +61,7 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
+        working-directory: main
 
       - name: Generate final report and update README
         env:
