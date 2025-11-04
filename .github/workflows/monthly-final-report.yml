@@ -3,6 +3,7 @@ on:
   schedule:
     # run on the 28th of the month at 1am
     - cron: "00 01 28 * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -61,6 +62,7 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
+        working-directory: main
 
       - name: Generate final report and update README
         env:
