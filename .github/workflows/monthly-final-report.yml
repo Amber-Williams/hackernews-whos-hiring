@@ -3,6 +3,7 @@ on:
   schedule:
     # run on the 28th of the month at 1am
     - cron: "00 01 28 * *"
+  workflow_dispatch:
 
 permissions:
   contents: write

@@ -32,12 +32,76 @@
 
     <script defer src="https://cloud.umami.is/script.js" data-website-id="518fa433-95b6-419a-9ed1-73878964bbd5"></script>
     <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #1f2328;
+            --surface-color: #f5f5f5;
+            --surface-border-color: #d0d7de;
+            --table-border-color: #d0d7de;
+            --table-header-bg: #f2f2f2;
+            --table-row-alt-bg: #f9f9f9;
+            --column-description-color: #666666;
+            --github-button-bg: #24292e;
+            --github-button-text: #ffffff;
+            --github-button-hover-bg: #2f363d;
+            --button-primary-bg: #4caf50;
+            --button-primary-text: #ffffff;
+            --button-primary-border: #4caf50;
+            --button-primary-hover-bg: #45a049;
+            --button-secondary-bg: #6c757d;
+            --button-secondary-text: #ffffff;
+            --button-secondary-border: #6c757d;
+            --button-secondary-hover-bg: #5a6268;
+            --button-outlined-text: #24292e;
+            --message-error-bg: #ffebee;
+            --message-error-text: #c62828;
+            --message-success-bg: #e8f5e9;
+            --message-success-text: #2e7d32;
+            --dropdown-bg: #f9f9f9;
+            --dropdown-hover-bg: #dddddd;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f172a;
+                --text-color: #f8fafc;
+                --surface-color: #16213a;
+                --surface-border-color: #273048;
+                --table-border-color: #273048;
+                --table-header-bg: #1d2947;
+                --table-row-alt-bg: #19233d;
+                --column-description-color: #cbd5f5;
+                --github-button-bg: #f0f6fc;
+                --github-button-text: #1f2328;
+                --github-button-hover-bg: #d0e2ff;
+                --button-primary-bg: #2dd36f;
+                --button-primary-text: #052915;
+                --button-primary-border: #2dd36f;
+                --button-primary-hover-bg: #28be65;
+                --button-secondary-bg: #334155;
+                --button-secondary-text: #f8fafc;
+                --button-secondary-border: #334155;
+                --button-secondary-hover-bg: #3f4d63;
+                --button-outlined-text: #f8fafc;
+                --message-error-bg: #3f1d2b;
+                --message-error-text: #ff99b4;
+                --message-success-bg: #1e2f25;
+                --message-success-text: #6ce7a5;
+                --dropdown-bg: #1d2947;
+                --dropdown-hover-bg: #243257;
+                --shadow-color: rgba(15, 23, 42, 0.6);
+            }
+        }
+
         body {
             font-family: Arial, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             position: relative;
+            background-color: var(--bg-color);
+            color: var(--text-color);
         }
         .github-button {
             position: absolute;
@@ -45,8 +109,8 @@
             right: 20px;
             display: flex;
             align-items: center;
-            background-color: #24292e;
-            color: white;
+            background-color: var(--github-button-bg);
+            color: var(--github-button-text);
             border-radius: 6px;
             padding: 5px 10px;
             font-size: 14px;
@@ -55,7 +119,7 @@
             transition: background-color 0.3s;
         }
         .github-button:hover {
-            background-color: #2f363d;
+            background-color: var(--github-button-hover-bg);
         }
         .github-button svg {
             margin-right: 5px;
@@ -70,8 +134,9 @@
             flex-direction: column;
             gap: 10px;
             padding: 15px;
-            background-color: #f5f5f5;
+            background-color: var(--surface-color);
             border-radius: 5px;
+            border: 1px solid var(--surface-border-color);
         }
         .table-container {
             overflow-x: auto;
@@ -79,19 +144,20 @@
         table {
             border-collapse: collapse;
             width: 100%;
+            color: inherit;
         }
         th, td {
-            border: 1px solid #dddddd;
+            border: 1px solid var(--table-border-color);
             text-align: left;
             padding: 8px;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: var(--table-header-bg);
             position: sticky;
             top: 0;
         }
         tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: var(--table-row-alt-bg);
         }
         h1 {
             font-size: 28px;
@@ -117,67 +183,72 @@
             border-radius: 4px;
         }
         .error {
-            background-color: #ffebee;
-            color: #c62828;
+            background-color: var(--message-error-bg);
+            color: var(--message-error-text);
         }
         .success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
+            background-color: var(--message-success-bg);
+            color: var(--message-success-text);
         }
         #sqlQuery {
             width: -webkit-fill-available;
             height: 80px;
             font-family: monospace;
             padding: 8px;
+            background-color: var(--surface-color);
+            color: inherit;
+            border: 1px solid var(--surface-border-color);
+            border-radius: 4px;
         }
         .tables-list {
             margin-bottom: 10px;
         }
         button {
             padding: 8px 12px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
+            background-color: var(--button-primary-bg);
+            color: var(--button-primary-text);
+            border: 1px solid var(--button-primary-border);
             border-radius: 4px;
             cursor: pointer;
-            border: 1px solid #4CAF50;
         }
         button:hover {
-            background-color: #45a049;
+            background-color: var(--button-primary-hover-bg);
         }
         button.secondary {
-            border: 1px solid #6c757d;
-            background-color: #6c757d;
+            border: 1px solid var(--button-secondary-border);
+            background-color: var(--button-secondary-bg);
+            color: var(--button-secondary-text);
         }
         button.secondary:hover {
-            background-color: #5a6268;
+            background-color: var(--button-secondary-hover-bg);
         }
 
         .outlined {
             background-color: transparent !important;
-            color: #24292e !important;
+            color: var(--button-outlined-text) !important;
         }
 
         .schema-container {
             display: none;
             margin-top: 20px;
             padding: 16px;
-            background-color: #f5f5f5;
+            background-color: var(--surface-color);
             border-radius: 5px;
+            border: 1px solid var(--surface-border-color);
         }
         .schema-table {
             width: 100%;
             margin-top: 10px;
         }
         .schema-table th {
-            background-color: #e9ecef;
+            background-color: var(--table-header-bg);
         }
         .schema-table td, .schema-table th {
             padding: 8px;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--table-border-color);
         }
         .column-description {
-            color: #666;
+            color: var(--column-description-color);
             font-size: 0.9em;
             margin-top: 4px;
         }
@@ -199,9 +270,9 @@
         .export-dropdown-content {
             display: none;
             position: absolute;
-            background-color: #f9f9f9;
+            background-color: var(--dropdown-bg);
             min-width: 140px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            box-shadow: 0px 8px 16px 0px var(--shadow-color);
             z-index: 1;
             border-radius: 4px;
             overflow: hidden; /* Ensures border-radius applies to children */
@@ -210,7 +281,7 @@
         }
 
         .export-dropdown-content a {
-            color: black;
+            color: inherit;
             padding: 10px 14px;
             text-decoration: none;
             display: block;
@@ -218,7 +289,7 @@
         }
 
         .export-dropdown-content a:hover {
-            background-color: #ddd;
+            background-color: var(--dropdown-hover-bg);
         }
 
         .export-container .show {
