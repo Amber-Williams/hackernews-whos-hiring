@@ -236,7 +236,7 @@ def create_report_from_post_data(year: str, month: str):
     # Save file locally to support legacy DataFile logic
     csv_path = f"{data_file.read_dir}/final_report.csv"
     if not os.path.exists(csv_path):
-        os.makedirs(csv_path, exist_ok=True)
+        os.makedirs(f"{data_file.read_dir}", exist_ok=True)
     df_final.to_csv(csv_path, index=False)
 
     data_file.write_md_from_csv(
